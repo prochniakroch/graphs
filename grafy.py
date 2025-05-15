@@ -1,4 +1,5 @@
 import sys
+import random
 from collections import deque
 
 class Graph:
@@ -116,7 +117,7 @@ class Graph:
         temp_mark = [False] * self.nodes
         perm_mark = [False] * self.nodes
         result = []
-        cycle_detected = [False]  # use list to allow modification in nested scope
+        cycle_detected = [False]
 
         def visit(u):
             if perm_mark[u]:
@@ -141,17 +142,20 @@ class Graph:
             result.reverse()
             print("Topological order (Tarjan):", " ".join(map(str, result)))
 
+def generate_random_graph(graph, saturation_percent):
+    """Generuje losowy graf skierowany o zadanej procentowej saturacji (0–100)."""
+    if not (0 <= saturation_percent <= 100):
+        raise ValueError("Saturacja musi być w zakresie 0–100")
 
+    saturation = saturation_percent / 100.0
+    total_possible_edges = graph.nodes * (graph.nodes - 1)
+    target_edges = int(total_possible_edges * saturation)
 
-def generate_tree(graph):
-    """Automatyczne generowanie drzewa binarnego"""
-    for i in range(1, graph.nodes + 1):
-        left = 2 * i
-        right = 2 * i + 1
-        if left <= graph.nodes:
-            graph.add_edge(i, left)
-        if right <= graph.nodes:
-            graph.add_edge(i, right)
+    all_possible_edges = [(u, v) for u in range(graph.nodes) for v in range(graph.nodes) if u != v]
+    selected_edges = random.sample(all_possible_edges, min(target_edges, len(all_possible_edges)))
+
+    for u, v in selected_edges:
+        graph.add_edge(u + 1, v + 1)
 
 def user_input_edges(graph):
     for i in range(1, graph.nodes + 1):
@@ -171,7 +175,12 @@ def main():
     graph = Graph(nodes, rep)
 
     if sys.argv[1] == "--generate":
-        generate_tree(graph)
+        try:
+            saturation_input = int(input("saturation (0–100)%> "))
+            generate_random_graph(graph, saturation_input)
+        except ValueError as e:
+            print("Invalid input for saturation:", e)
+            return
     else:
         user_input_edges(graph)
 
@@ -181,14 +190,14 @@ def main():
         try:
             action = input("action> ").strip().lower()
             if action == "help":
-                print("Help - this message")
-                print("Print - print graph")
-                print("Find - check if edge between two nodes is in the graph")
+                print("Help - This message")
+                print("Print - Print graph")
+                print("Find - Check if edge between two nodes is in the graph")
                 print("BFS - Breath-first search - print BFS search")
                 print("DFS - Depth-first search - print DFS search")
-                print("Topo-kahn - sorting")
-                print("Topo-tarjan - sorting")
-                print("Exit or quit - leave program")
+                print("Topo-kahn - Sorting")
+                print("Topo-tarjan - Sorting")
+                print("Exit or quit - Leave program")
             elif action == "print":
                 graph.print_graph()
             elif action == "find":
@@ -207,11 +216,10 @@ def main():
                 graph.topo_kahn()
             elif action == "topo-tarjan":
                 graph.topo_tarjan()
-
             elif action in ("exit", "quit"):
                 break
             else:
-                print("Unknown action. Try: Print, Find, Breath-first search, Depth-first search, Exit")
+                print("Unknown action. Try: Print, Find, BFS, DFS, Topo-kahn, Topo-tarjan, Exit")
         except Exception as e:
             print("Error:", e)
 
